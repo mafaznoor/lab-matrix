@@ -6,7 +6,6 @@ const fs = require('fs');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
 const multer = require('multer');
 
 const app = express();
@@ -35,16 +34,7 @@ const uploadAvatar = multer({
 // In-memory OTP store: { email: { otp, expiresAt, userData } }
 const otpStore = {};
 
-// Nodemailer transporter (Brevo SMTP)
-const transporter = nodemailer.createTransport({
-    host: process.env.BREVO_HOST,
-    port: parseInt(process.env.BREVO_PORT) || 587,
-    secure: false,
-    auth: {
-        user: process.env.BREVO_USER,
-        pass: process.env.BREVO_PASS
-    }
-});
+
 
 app.use(cors({
     origin: '*',
@@ -166,20 +156,31 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 // Send OTP email
 const sendOTPEmail = async (email, username, otp) => {
-    await transporter.sendMail({
-        from: `"Lab Matrix OS" <${process.env.BREVO_USER}>`,
-        to: email,
-        subject: 'Lab Matrix — Your Verification Code',
-        html: `
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8fafc;border-radius:16px;">
-            <h2 style="color:#1e293b;margin-bottom:8px;">Lab Matrix OS</h2>
-            <p style="color:#64748b;margin-bottom:24px;">Hi <strong>${username}</strong>, your verification code is:</p>
-            <div style="background:#1e293b;color:#38bdf8;font-size:36px;font-weight:900;letter-spacing:12px;text-align:center;padding:24px;border-radius:12px;margin-bottom:24px;">
-                ${otp}
-            </div>
-            <p style="color:#94a3b8;font-size:13px;">This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
-        </div>`
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'api-key': process.env.BREVO_API_KEY
+        },
+        body: JSON.stringify({
+            sender: { name: 'Lab Matrix OS', email: process.env.BREVO_USER },
+            to: [{ email: email }],
+            subject: 'Lab Matrix — Your Verification Code',
+            htmlContent: `
+            <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8fafc;border-radius:16px;">
+                <h2 style="color:#1e293b;">Lab Matrix OS</h2>
+                <p style="color:#64748b;">Hi <strong>${username}</strong>, your verification code is:</p>
+                <div style="background:#1e293b;color:#38bdf8;font-size:36px;font-weight:900;letter-spacing:12px;text-align:center;padding:24px;border-radius:12px;margin-bottom:24px;">
+                    ${otp}
+                </div>
+                <p style="color:#94a3b8;font-size:13px;">Expires in 10 minutes.</p>
+            </div>`
+        })
     });
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Brevo API error');
+    }
 };
 
 // --- AUTH ROUTES ---
@@ -459,26 +460,37 @@ app.post('/api/report-issue', authenticateToken, (req, res) => {
             try {
                 const typeLabels = { bug: '🐛 Bug Report', lab: '🏢 Lab Issue', equipment: '⚙️ Equipment Issue' };
                 const typeColors = { bug: '#f43f5e', lab: '#3b82f6', equipment: '#f59e0b' };
-                await transporter.sendMail({
-                    from: `"Lab Matrix OS" <${process.env.BREVO_USER}>`,
-                    to: 'mafaznoor510@gmail.com',
-                    subject: `[Lab Matrix] New ${type} Report: ${title}`,
-                    html: `
-                    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#f8fafc;border-radius:16px;">
-                        <h2 style="color:#1e293b;margin-bottom:4px;">Lab Matrix OS — Issue Report</h2>
-                        <p style="color:#94a3b8;font-size:13px;margin-bottom:24px;">A new report has been submitted.</p>
-                        <div style="background:${typeColors[type] || '#3b82f6'};color:white;display:inline-block;padding:6px 16px;border-radius:8px;font-size:13px;font-weight:bold;margin-bottom:16px;">
-                            ${typeLabels[type] || type}
-                        </div>
-                        <div style="background:white;padding:20px;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:16px;">
-                            <p style="color:#64748b;font-size:12px;margin:0 0 4px;">TITLE</p>
-                            <p style="color:#1e293b;font-size:16px;font-weight:bold;margin:0 0 16px;">${title}</p>
-                            <p style="color:#64748b;font-size:12px;margin:0 0 4px;">DESCRIPTION</p>
-                            <p style="color:#334155;font-size:14px;margin:0;">${description || 'No description provided.'}</p>
-                        </div>
-                        <p style="color:#94a3b8;font-size:12px;">Reported by <strong style="color:#1e293b;">${reporterName}</strong> at ${new Date().toLocaleString()}</p>
-                    </div>`
+                const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'api-key': process.env.BREVO_API_KEY
+                    },
+                    body: JSON.stringify({
+                        sender: { name: 'Lab Matrix OS', email: process.env.BREVO_USER },
+                        to: [{ email: 'mafaznoor510@gmail.com' }],
+                        subject: `[Lab Matrix] New ${type} Report: ${title}`,
+                        htmlContent: `
+                        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#f8fafc;border-radius:16px;">
+                            <h2 style="color:#1e293b;margin-bottom:4px;">Lab Matrix OS — Issue Report</h2>
+                            <p style="color:#94a3b8;font-size:13px;margin-bottom:24px;">A new report has been submitted.</p>
+                            <div style="background:${typeColors[type] || '#3b82f6'};color:white;display:inline-block;padding:6px 16px;border-radius:8px;font-size:13px;font-weight:bold;margin-bottom:16px;">
+                                ${typeLabels[type] || type}
+                            </div>
+                            <div style="background:white;padding:20px;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:16px;">
+                                <p style="color:#64748b;font-size:12px;margin:0 0 4px;">TITLE</p>
+                                <p style="color:#1e293b;font-size:16px;font-weight:bold;margin:0 0 16px;">${title}</p>
+                                <p style="color:#64748b;font-size:12px;margin:0 0 4px;">DESCRIPTION</p>
+                                <p style="color:#334155;font-size:14px;margin:0;">${description || 'No description provided.'}</p>
+                            </div>
+                            <p style="color:#94a3b8;font-size:12px;">Reported by <strong style="color:#1e293b;">${reporterName}</strong> at ${new Date().toLocaleString()}</p>
+                        </div>`
+                    })
                 });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Brevo API error for issue report');
+                }
             } catch (emailErr) {
                 console.error('❌ Issue report email failed:', emailErr.message);
             }
