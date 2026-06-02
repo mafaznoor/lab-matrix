@@ -17,7 +17,7 @@ function Maintenance({ token, user }) {
         console.error("Error fetching maintenance logs:", error);
         setLoading(false);
       });
-  }, []);
+  }, [token]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

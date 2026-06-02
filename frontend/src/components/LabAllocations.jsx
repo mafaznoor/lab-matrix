@@ -30,7 +30,7 @@ function LabAllocations({ token, user }) {
       console.error("Error fetching allocation data:", error);
       setLoading(false);
     });
-  }, []);
+  }, [token]);
 
   // 2. Form Submit
   const handleSubmit = (e) => {

@@ -25,7 +25,7 @@ function EquipmentPanel({ token, user }) {
         console.error('Error fetching data:', error);
         setLoading(false);
       });
-  }, []);
+  }, [token]);
 
   // 2. Filtered Data
   const filteredData = equipmentData.filter((item) => {

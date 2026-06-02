@@ -135,10 +135,7 @@ function AdminPanel({ token, user }) {
         { id: 'logs', label: 'Activity', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', count: logs.length },
     ];
 
-    const roleBadge = (role) => {
-        const colors = { admin: 'text-purple-600 bg-purple-500/10 border-purple-500/20', maintainer: 'text-blue-600 bg-blue-500/10 border-blue-500/20', viewer: 'text-slate-600 bg-slate-500/10 border-slate-500/20' };
-        return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider ${colors[role] || colors.viewer}`}>{role}</span>;
-    };
+
 
     const statusBadge = (status) => {
         const colors = { open: 'text-rose-600 bg-rose-500/10 border-rose-500/20', in_progress: 'text-amber-600 bg-amber-500/10 border-amber-500/20', resolved: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20' };
