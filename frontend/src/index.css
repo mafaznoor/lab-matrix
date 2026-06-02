@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 1. Global Setup */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f8fafc; /* Slate-50 base */
+  overflow: hidden; /* Scrollbar control */
+  cursor: none; /* Asli cursor ko hide kiya */
+}
+
+/* 2. Custom Liquid Cursor Style */
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(59, 130, 246, 0.4); /* Blueish glow */
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999999;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 25px 12px rgba(59, 130, 246, 0.3);
+  transition: transform 0.05s ease-out;
+}
+
+/* 3. Smooth Scrollbar for App */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* 4. Glassmorphism Helper Classes (Tailwind ke sath combine ho jayengi) */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* 5. Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+.animate-liquid {
+  animation: pulse 8s ease-in-out infinite;
+}
