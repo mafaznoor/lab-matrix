@@ -54,22 +54,26 @@ app.use((req, res, next) => {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: parseInt(process.env.DB_PORT) || 3306,
     ssl: { rejectUnauthorized: false },
-    connectTimeout: 30000
+    connectTimeout: 30000,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
 });
 
-db.on('error', (err) => {
-    console.error('❌ DB Connection Error:', err.message);
-});
-
-db.connect((err) => {
+// Test initial connection and run setup queries
+db.getConnection((err, connection) => {
     if (err) { console.error('❌ Database connection failed: ' + err.message); return; }
+    console.log('✅ Connected to Railway MySQL Database!');
+    connection.release();
     console.log('✅ Connected to Railway MySQL Database!');
 
     const createUsersTable = `
